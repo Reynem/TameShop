@@ -1,0 +1,6 @@
+@TameShop_HostAddress = http://localhost:5236
+
+GET {{TameShop_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
