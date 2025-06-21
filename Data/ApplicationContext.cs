@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using TameShop.Models;
 
-namespace TameShop
+namespace TameShop.Data
 {
     public class ApplicationContext : DbContext
     {
