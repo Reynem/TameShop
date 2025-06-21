@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Runtime.CompilerServices;
 
 namespace TameShop.Controllers
@@ -7,16 +8,33 @@ namespace TameShop.Controllers
     [Route("[controller]")]
     public class AnimalsController : ControllerBase
     {
+        private ApplicationContext db;
+        public AnimalsController()
+        {
+            db = new();
+            db.Database.EnsureCreated();
+        }
+
+
         [HttpGet]
         public ActionResult Index()
         {
-            var animals = new List<Animal>
-            {
-                new Animal { Id = 1, Name = "Dog", Cost = 100.0, Type = "Mammal", Description = "A friendly dog.", ImageData = null },
-                new Animal { Id = 2, Name = "Cat", Cost = 80.0, Type = "Mammal", Description = "A cute cat.", ImageData = null },
-                new Animal { Id = 3, Name = "Parrot", Cost = 50.0, Type = "Bird", Description = "A colorful parrot.", ImageData = null }
-            };
+            List<Animal> animals = db.Animals.ToList();
             return Ok(animals);
         }
+
+        [HttpPost]
+        public ActionResult Create([FromBody] Animal animal)
+        {
+            if (animal == null || string.IsNullOrEmpty(animal.Name) || animal.Cost < 0)
+            {
+                return BadRequest("Invalid animal data.");
+            }
+            db.Animals.Add(animal);
+            db.SaveChanges();
+
+            return CreatedAtAction(nameof(Index), animal);
+        }
+
     }
 }
