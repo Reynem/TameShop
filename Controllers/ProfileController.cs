@@ -1,83 +1,129 @@
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using System.Runtime.CompilerServices;
+using System.Security.Claims;
 using TameShop.Data;
 using TameShop.Models;
 
 namespace TameShop.Controllers
 {
     [ApiController]
-    [Route("[controller]")]
+    [Route("api/[controller]")]
+    [Authorize]
     public class ProfileController : ControllerBase
     {
         private ApplicationContext db;
-        public ProfileController()
+        private readonly UserManager<User> userManager;
+        public ProfileController(ApplicationContext _db, UserManager<User> _userManager)
         {
-            db = new();
-            db.Database.EnsureCreated();
+            db = _db;
+            userManager = _userManager;
         }
 
 
         [HttpGet]
         public ActionResult Index()
         {
-            List<Animal> animals = db.Animals.ToList();
-            return Ok(animals);
-        }
-
-        [HttpPost]
-        public ActionResult Create([FromBody] Animal animal)
-        {
-            if (animal == null || string.IsNullOrEmpty(animal.Name))
-            {
-                return BadRequest("Invalid animal data.");
-            }
-            db.Animals.Add(animal);
-            db.SaveChanges();
-
-            return CreatedAtAction(nameof(Index), animal);
+            List<Profile> Profiles = db.Profiles.ToList();
+            return Ok(Profiles);
         }
 
         [HttpGet("{id}")]
-        public ActionResult Get(int id)
+        public ActionResult GetProfile(int id)
         {
-            var animal = db.Animals.Find(id);
-            if (animal == null)
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (userId == null)
             {
-                return NotFound();
+                return Unauthorized("Invalid user identificator");
             }
-            return Ok(animal);
+
+            var profile = db.Profiles.Find(id);
+            if (profile == null)
+            {
+                return NotFound("Please create profile for current user");
+            }
+            return Ok(profile);
+        }
+
+        [HttpPost]
+        public ActionResult CreateProfile([FromBody] Profile profile)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (userId == null)
+            {
+                return Unauthorized("Invalid user identificator");
+            }
+
+            var existingProfile = db.Profiles.FirstOrDefault(p => p.Id == userId);
+            if (existingProfile != null)
+            {
+                return Conflict("Profile already exists for this user. Use PUT to update.");
+            }
+
+
+            if (profile == null || string.IsNullOrEmpty(profile.Name))
+            {
+                return BadRequest("Invalid profile data.");
+            }
+
+            var newProfile = new Profile { 
+                Id = userId,
+                Name = profile.Name,
+                Description = profile.Description,
+                BirthDate = profile.BirthDate
+            };
+
+            db.Profiles.Add(profile);
+            db.SaveChanges();
+
+            return CreatedAtAction(nameof(Index), profile);
         }
 
         [HttpPut("{id}")]
-        public ActionResult Update(int id, [FromBody] Animal animal)
+        public ActionResult UpdateProfile(int id, [FromBody] Profile profile)
         {
-            if (animal == null || string.IsNullOrEmpty(animal.Name))
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (userId == null)
+            {
+                return Unauthorized("Invalid user identificator");
+            }
+
+            if (profile == null || string.IsNullOrEmpty(profile.Name))
             {
                 return BadRequest("Invalid animal data.");
             }
-            var existingAnimal = db.Animals.Find(id);
-            if (existingAnimal == null)
+            var existingProfile = db.Profiles.Find(id);
+            if (existingProfile == null)
             {
                 return NotFound();
             }
-            existingAnimal.Name = animal.Name;
-            existingAnimal.Description = animal.Description;
-            existingAnimal.BirthTime = animal.BirthTime;
-            existingAnimal.ProfilePicture = animal.ProfilePicture;
+            existingProfile.Name = profile.Name;
+            existingProfile.Description = profile.Description;
+            existingProfile.BirthDate = profile.BirthDate;
+            existingProfile.ProfilePicture = profile.ProfilePicture;
             db.SaveChanges();
             return NoContent();
         }
 
         [HttpDelete("{id}")]
-        public ActionResult Delete(int id)
+        public ActionResult DeleteProfile(int id)
         {
-            var animal = db.Animals.Find(id);
-            if (animal == null)
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (userId == null)
+            {
+                return Unauthorized("Invalid user identificator");
+            }
+
+            var profile = db.Profiles.Find(id);
+            if (profile == null)
             {
                 return NotFound();
             }
-            db.Animals.Remove(animal);
+            db.Profiles.Remove(profile);
             db.SaveChanges();
             return NoContent();
         }
