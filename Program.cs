@@ -2,10 +2,17 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
+using TameShop.Data;
 using TameShop.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddDbContext<UserDbContext>(options =>
+    options.UseNpgsql("Host=localhost;Port=5434;Database=tameshop;Username=kerim;Password=admin1234")); // example connection string
+
+builder.Services.AddIdentity<User, IdentityRole>()
+    .AddEntityFrameworkStores<UserDbContext>()
+    .AddDefaultTokenProviders();
 
 builder.Services.AddRazorPages();
 
@@ -13,15 +20,6 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddControllers();
 
 var app = builder.Build();
-
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI(c =>
-    {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "TameShop API V1");
-    });
-}
 
 app.UseHttpsRedirection();
 
