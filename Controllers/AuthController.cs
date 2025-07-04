@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using TameShop.Data;
 using TameShop.Models;
 
@@ -13,18 +14,23 @@ namespace TameShop.Controllers
             _context = context;
         }
 
-        [HttpGet("test")]
-        public IActionResult Test()
+        [HttpPost("register")]
+        public async Task<IActionResult> Register([FromBody] User user)
         {
-            var testUser = new User
+            if (user == null || string.IsNullOrEmpty(user.UserName) || string.IsNullOrEmpty(user.PasswordHash))
             {
-                UserName = "testuser",
-                PasswordHash = "testpassword",
-                Email = "example@gmail.com"
-            };
-            _context.Users.Add(testUser);
-            _context.SaveChanges();
-            return Ok(testUser);
+                return BadRequest("Invalid user data.");
+            }
+
+            var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.UserName == user.UserName);
+            if (existingUser != null)
+            {
+                return Conflict("User already exists.");
+            }
+
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
+            return Ok("User registered successfully.");
         }
     }
 }
