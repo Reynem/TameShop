@@ -57,10 +57,11 @@ namespace TameShop.Utils
 
         private static bool SlowEquals(byte[] a, byte[] b)
         {
-            if (a.Length != b.Length) return false;
-            int diff = 0;
-            for (int i = 0; i < a.Length; i++)
-                diff |= a[i] ^ b[i];
+            uint diff = (uint)a.Length ^ (uint)b.Length;
+             for (int i = 0; i < a.Length && i < b.Length; i++)
+            {
+                diff |= (uint)(a[i] ^ b[i]);
+            }
             return diff == 0;
         }
 
