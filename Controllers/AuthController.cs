@@ -30,7 +30,9 @@ namespace TameShop.Controllers
             }
 
             var existingUser = await _context.Users
-                .FirstOrDefaultAsync(u => u.UserName != null && u.UserName.Equals(registerDTO.UserName, StringComparison.OrdinalIgnoreCase));
+                .FirstOrDefaultAsync(u =>
+                    u.UserName != null &&
+                    EF.Functions.ILike(u.UserName, registerDTO.UserName));
 
             if (existingUser != null)
             {
@@ -38,7 +40,9 @@ namespace TameShop.Controllers
             }
 
             var existingEmail = await _context.Users
-               .FirstOrDefaultAsync(u => u.Email != null && u.Email.Equals(registerDTO.Email, StringComparison.OrdinalIgnoreCase));
+                .FirstOrDefaultAsync(u =>
+                    u.Email != null &&
+                    EF.Functions.ILike(u.Email, registerDTO.Email));
 
             if (existingEmail != null)
             {
@@ -69,9 +73,12 @@ namespace TameShop.Controllers
             }
 
             var user = await _context.Users
-                .FirstOrDefaultAsync(u => u.UserName != null && u.UserName.Equals(loginDTO.UserName, StringComparison.OrdinalIgnoreCase));
+                .FirstOrDefaultAsync(u =>
+                    u.UserName != null &&
+                    EF.Functions.ILike(u.UserName, loginDTO.UserName));
 
-            if (user == null || string.IsNullOrEmpty(user.PasswordHash) || !Utils.PasswordHashing.VerifyPassword(loginDTO.Password, user.PasswordHash))
+            if (user == null || string.IsNullOrEmpty(user.PasswordHash) ||
+                !Utils.PasswordHashing.VerifyPassword(loginDTO.Password, user.PasswordHash))
             {
                 return Unauthorized("Invalid username or password.");
             }
@@ -81,7 +88,6 @@ namespace TameShop.Controllers
             return Ok(token);
         }
 
-
         [HttpPost("login-email")]
         public async Task<IActionResult> LoginByEmail([FromBody] LoginDTO loginDTO)
         {
@@ -90,9 +96,13 @@ namespace TameShop.Controllers
                 return BadRequest("Invalid login data");
             }
 
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email != null && u.Email.Equals(loginDTO.Email, StringComparison.OrdinalIgnoreCase));
+            var user = await _context.Users
+                .FirstOrDefaultAsync(u =>
+                    u.Email != null &&
+                    EF.Functions.ILike(u.Email, loginDTO.Email));
 
-            if (user == null || string.IsNullOrEmpty(user.PasswordHash) || !Utils.PasswordHashing.VerifyPassword(loginDTO.Password, user.PasswordHash))
+            if (user == null || string.IsNullOrEmpty(user.PasswordHash) ||
+                !Utils.PasswordHashing.VerifyPassword(loginDTO.Password, user.PasswordHash))
             {
                 return Unauthorized("Invalid username or password.");
             }
