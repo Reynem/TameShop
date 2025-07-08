@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using TameShop.Data;
 using TameShop.Models;
 using TameShop.ViewModels;
+using TameShop.JWT;
 
 namespace TameShop.Controllers
 {
@@ -10,9 +11,12 @@ namespace TameShop.Controllers
     public class AuthController : Controller
     {
         private readonly UserDbContext _context;
-        public AuthController(UserDbContext context)
+        private readonly TokenProvider _tokenProvider;
+
+        public AuthController(UserDbContext context, TokenProvider tokenProvider)
         {
             _context = context;
+            _tokenProvider = tokenProvider;
         }
 
         [HttpPost("register")]
@@ -51,7 +55,9 @@ namespace TameShop.Controllers
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
 
-            return StatusCode(201, "User registered successfully.");
+            string token = _tokenProvider.Create(user);
+
+            return StatusCode(201, token);
         }
 
         [HttpPost("login")]
@@ -70,8 +76,11 @@ namespace TameShop.Controllers
                 return Unauthorized("Invalid username or password.");
             }
 
-            return Ok("Login successful.");
+            string token = _tokenProvider.Create(user);
+
+            return Ok(token);
         }
+
 
         [HttpPost("login-email")]
         public async Task<IActionResult> LoginByEmail([FromBody] LoginDTO loginDTO)
@@ -88,8 +97,9 @@ namespace TameShop.Controllers
                 return Unauthorized("Invalid username or password.");
             }
 
-            return Ok("Login successful");
-        }
+            string token = _tokenProvider.Create(user);
 
+            return Ok(user);
+        }
     }
 }

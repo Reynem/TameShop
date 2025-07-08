@@ -6,7 +6,7 @@ using TameShop.Models;
 
 namespace TameShop.JWT
 {
-    internal sealed class TokenProvider(IConfiguration configuration)
+    public class TokenProvider(IConfiguration configuration)
     {
         public string Create(User user)
         {
