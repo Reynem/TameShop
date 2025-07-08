@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using TameShop.Data;
 using TameShop.Models;
+using TameShop.JWT;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,6 +16,7 @@ builder.Services.AddIdentity<User, IdentityRole>()
     .AddDefaultTokenProviders();
 
 builder.Services.AddRazorPages();
+builder.Services.AddSingleton<TokenProvider>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddControllers();
