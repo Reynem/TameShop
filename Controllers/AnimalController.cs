@@ -4,7 +4,6 @@ using TameShop.Data;
 using TameShop.Models;
 namespace TameShop.Controllers
 {
-    [Authorize]
     [Route("[controller]")]
     public class AnimalController : Controller
     {
@@ -32,6 +31,7 @@ namespace TameShop.Controllers
             return Ok(animal);
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpPost]
         public IActionResult AddAnimal([FromBody] Animal animal)
         {
@@ -44,6 +44,7 @@ namespace TameShop.Controllers
             return CreatedAtAction(nameof(GetAnimal), new { id = animal.Id }, animal);
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpPut("{id}")]
         public IActionResult UpdateAnimal(int id, [FromBody] Animal animal)
         {
@@ -65,6 +66,7 @@ namespace TameShop.Controllers
             return NoContent();
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpDelete("{id}")]
         public IActionResult DeleteAnimal(int id)
         {

@@ -24,6 +24,7 @@ namespace TameShop.JWT
                 [
                     new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
                     new Claim(JwtRegisteredClaimNames.Name, user.UserName ?? string.Empty),
+                    new Claim(ClaimTypes.Role, "Admin"),
                     new Claim(JwtRegisteredClaimNames.Email, user.Email ?? string.Empty),
                     new Claim(JwtRegisteredClaimNames.EmailVerified, user.EmailConfirmed ? "true" : "false"),
                 ]),
