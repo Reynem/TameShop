@@ -109,7 +109,7 @@ namespace TameShop.Controllers
 
             string token = _tokenProvider.Create(user);
 
-            return Ok(user);
+            return Ok(token);
         }
     }
 }
