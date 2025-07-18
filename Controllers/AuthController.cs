@@ -22,11 +22,9 @@ namespace TameShop.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDTO registerDTO)
         {
-            if (string.IsNullOrWhiteSpace(registerDTO.UserName) ||
-                string.IsNullOrWhiteSpace(registerDTO.Password) ||
-                string.IsNullOrWhiteSpace(registerDTO.Email))
+            if (!ModelState.IsValid)
             {
-                return BadRequest("Invalid user data.");
+                return BadRequest(ModelState);
             }
 
             var existingUser = await _context.Users

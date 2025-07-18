@@ -12,7 +12,7 @@ var builder = WebApplication.CreateBuilder(args);
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 
 builder.Services.AddDbContext<UserDbContext>(options =>
-    options.UseNpgsql("Host=localhost;Port=5434;Database=tameshop;Username=kerim;Password=admin1234")); // example connection string
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))); // example connection string
 
 builder.Services.AddAuthentication(options =>
 {
