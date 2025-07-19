@@ -4,7 +4,7 @@
     {
         public int Id { get; set; }
         public string UserId { get; set; } = string.Empty;
-        public List<CartItem> Items { get; set; } = [];
+        public required List<OrderItem> Items { get; set; }
         public decimal TotalAmount { get; set; }
         public OrderStatus Status { get; set; }
         public DateTime CreatedAt { get; set; }

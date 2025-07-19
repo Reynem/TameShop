@@ -7,6 +7,8 @@ namespace TameShop.Data
     {
         public DbSet<User> Users { get; set; }
         public DbSet<Animal> Animals { get; set; }
+        public DbSet<CartItem> CartItems { get; set; }
+        public DbSet<Cart>
 
         public UserDbContext(DbContextOptions<UserDbContext> options) : base(options)
         {
@@ -16,6 +18,7 @@ namespace TameShop.Data
         {
             base.OnModelCreating(modelBuilder);
         }
+        public DbSet<TameShop.Models.Order> Order { get; set; } = default!;
 
         //protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         //{
