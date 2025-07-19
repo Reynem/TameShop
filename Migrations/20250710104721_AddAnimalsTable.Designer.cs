@@ -11,7 +11,7 @@ using TameShop.Data;
 
 namespace TameShop.Migrations
 {
-    [DbContext(typeof(UserDbContext))]
+    [DbContext(typeof(TameShopDbContext))]
     [Migration("20250710104721_AddAnimalsTable")]
     partial class AddAnimalsTable
     {

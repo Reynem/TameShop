@@ -11,7 +11,7 @@ using TameShop.Models;
 var builder = WebApplication.CreateBuilder(args);
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 
-builder.Services.AddDbContext<UserDbContext>(options =>
+builder.Services.AddDbContext<TameShopDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))); // example connection string
 
 builder.Services.AddAuthentication(options =>
@@ -70,7 +70,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddIdentity<User, IdentityRole>()
-    .AddEntityFrameworkStores<UserDbContext>()
+    .AddEntityFrameworkStores<TameShopDbContext>()
     .AddDefaultTokenProviders();
 
 builder.Services.AddRazorPages();
@@ -105,7 +105,7 @@ app.MapControllers();
 
 using (var scope = app.Services.CreateScope())
 {
-    var db = scope.ServiceProvider.GetRequiredService<UserDbContext>();
+    var db = scope.ServiceProvider.GetRequiredService<TameShopDbContext>();
     db.Database.Migrate();
 }
 

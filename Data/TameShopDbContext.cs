@@ -3,14 +3,14 @@ using TameShop.Models;
 
 namespace TameShop.Data
 {
-    public class UserDbContext : DbContext
+    public class TameShopDbContext : DbContext
     {
         public DbSet<User> Users { get; set; }
         public DbSet<Animal> Animals { get; set; }
         public DbSet<CartItem> CartItems { get; set; }
-        public DbSet<Cart>
+        public DbSet<Cart> Carts { get; set; }
 
-        public UserDbContext(DbContextOptions<UserDbContext> options) : base(options)
+        public TameShopDbContext(DbContextOptions<TameShopDbContext> options) : base(options)
         {
         }
 

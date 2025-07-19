@@ -7,13 +7,13 @@ using TameShop.JWT;
 
 namespace TameShop.Controllers
 {
-    [Route("[controller]")]
+    [Route("api/animals")]
     public class AuthController : Controller
     {
-        private readonly UserDbContext _context;
+        private readonly TameShopDbContext _context;
         private readonly TokenProvider _tokenProvider;
 
-        public AuthController(UserDbContext context, TokenProvider tokenProvider)
+        public AuthController(TameShopDbContext context, TokenProvider tokenProvider)
         {
             _context = context;
             _tokenProvider = tokenProvider;

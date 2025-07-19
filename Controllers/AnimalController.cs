@@ -1,29 +1,32 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using TameShop.Data;
 using TameShop.Models;
+using TameShop.ViewModels;
 namespace TameShop.Controllers
 {
+    [ApiController]
     [Route("[controller]")]
     public class AnimalController : Controller
     {
-        private readonly UserDbContext _context;
-        public AnimalController(UserDbContext context)
+        private readonly TameShopDbContext _context;
+        public AnimalController(TameShopDbContext context)
         {
             _context = context;
         }
 
         [HttpGet]
-        public IActionResult GetAnimals()
+        public async Task<IActionResult> GetAnimals()
         {
-            var animals = _context.Animals.ToList();
+            var animals = await _context.Animals.ToListAsync();
             return Ok(animals);
         }
 
         [HttpGet("{id}")]
-        public IActionResult GetAnimal(int id)
+        public async Task<IActionResult> GetAnimal(int id)
         {
-            var animal = _context.Animals.FirstOrDefault(a => a.Id == id);
+            var animal = await _context.Animals.FirstOrDefaultAsync(a => a.Id == id);
             if (animal == null)
             {
                 return NotFound("Animal not found.");
@@ -33,61 +36,69 @@ namespace TameShop.Controllers
 
         [Authorize(AuthenticationSchemes = "Bearer")]
         [HttpPost]
-        public IActionResult AddAnimal([FromBody] Animal animal)
+        public async Task<IActionResult> AddAnimal([FromBody] AnimalDTO animalDTO)
         {
-            if (animal == null || string.IsNullOrWhiteSpace(animal.Name) || animal.Price <= 0)
+            if (!ModelState.IsValid)
             {
                 return BadRequest("Invalid animal data.");
             }
-            _context.Animals.Add(animal);
-            _context.SaveChanges();
+            var animal = new Animal
+            {
+                Name = animalDTO.Name,
+                Price = animalDTO.Price,
+                Description = animalDTO.Description,
+                ImageUrl = animalDTO.ImageUrl,
+                Category = animalDTO.Category
+            };
+            await _context.Animals.AddAsync(animal);
+            await _context.SaveChangesAsync();
             return CreatedAtAction(nameof(GetAnimal), new { id = animal.Id }, animal);
         }
 
         [Authorize(AuthenticationSchemes = "Bearer")]
         [HttpPut("{id}")]
-        public IActionResult UpdateAnimal(int id, [FromBody] Animal animal)
+        public async Task<IActionResult> UpdateAnimal(int id, [FromBody] AnimalDTO animalDTO)
         {
-            if (animal == null || string.IsNullOrWhiteSpace(animal.Name) || animal.Price <= 0)
+            if (!ModelState.IsValid)
             {
                 return BadRequest("Invalid animal data.");
             }
-            var existingAnimal = _context.Animals.FirstOrDefault(a => a.Id == id);
+            var existingAnimal = await _context.Animals.FirstOrDefaultAsync(a => a.Id == id);
             if (existingAnimal == null)
             {
                 return NotFound("Animal not found.");
             }
-            existingAnimal.Name = animal.Name;
-            existingAnimal.Price = animal.Price;
-            existingAnimal.Description = animal.Description;
-            existingAnimal.ImageUrl = animal.ImageUrl;
-            existingAnimal.Category = animal.Category;
-            _context.SaveChanges();
+            existingAnimal.Name = animalDTO.Name;
+            existingAnimal.Price = animalDTO.Price;
+            existingAnimal.Description = animalDTO.Description;
+            existingAnimal.ImageUrl = animalDTO.ImageUrl;
+            existingAnimal.Category = animalDTO.Category;
+            await _context.SaveChangesAsync();
             return NoContent();
         }
 
         [Authorize(AuthenticationSchemes = "Bearer")]
         [HttpDelete("{id}")]
-        public IActionResult DeleteAnimal(int id)
+        public async Task<IActionResult> DeleteAnimal(int id)
         {
-            var animal = _context.Animals.FirstOrDefault(a => a.Id == id);
+            var animal = await _context.Animals.FirstOrDefaultAsync(a => a.Id == id);
             if (animal == null)
             {
                 return NotFound("Animal not found.");
             }
             _context.Animals.Remove(animal);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
             return NoContent();
         }
 
         [HttpGet("category")]
-        public IActionResult GetAnimalsByCategory([FromQuery] string category)
+        public async Task<IActionResult> GetAnimalsByCategory([FromQuery] string category)
         {
             if (string.IsNullOrWhiteSpace(category))
             {
                 return BadRequest("Category cannot be empty.");
             }
-            var animals = _context.Animals.Where(a => a.Category == category).ToList();
+            var animals = await _context.Animals.Where(a => a.Category == category).ToListAsync();
             if (animals.Count == 0)
             {
                 return NotFound("No animals found in this category.");

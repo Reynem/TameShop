@@ -10,7 +10,7 @@ using TameShop.Data;
 
 namespace TameShop.Migrations
 {
-    [DbContext(typeof(UserDbContext))]
+    [DbContext(typeof(TameShopDbContext))]
     partial class UserDbContextModelSnapshot : ModelSnapshot
     {
         protected override void BuildModel(ModelBuilder modelBuilder)
