@@ -1,4 +1,6 @@
-﻿namespace TameShop.Models
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace TameShop.Models
 {
     public class Animal
     {
