@@ -7,7 +7,7 @@ using TameShop.ViewModels;
 namespace TameShop.Controllers
 {
     [ApiController]
-    [Route("[controller]")]
+    [Route("api/animals")]
     public class AnimalController : Controller
     {
         private readonly TameShopDbContext _context;

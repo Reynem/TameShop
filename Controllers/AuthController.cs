@@ -7,7 +7,7 @@ using TameShop.JWT;
 
 namespace TameShop.Controllers
 {
-    [Route("api/animals")]
+    [Route("[controller]")]
     public class AuthController : Controller
     {
         private readonly TameShopDbContext _context;
