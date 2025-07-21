@@ -1,7 +1,10 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using TameShop.Models;
 using TameShop.Data;
+using Microsoft.EntityFrameworkCore;
+using TameShop.ViewModels;
 
 namespace TameShop.Controllers
 {
@@ -18,12 +21,8 @@ namespace TameShop.Controllers
         }
 
         [HttpGet]
-        public IActionResult GetCart()
+        public async Task<IActionResult> GetCart()
         {
-            if (User.Identity == null || !User.Identity.IsAuthenticated)
-            {
-                return Unauthorized("User is not authenticated.");
-            }
 
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
@@ -32,32 +31,67 @@ namespace TameShop.Controllers
                 return Forbid("User ID not found in claims.");
             }
 
-            var cart = _context.Carts.FirstOrDefault(c => c.UserId == userId);
+            var cart = await _context.Carts
+                .Include(c => c.Items)
+                .FirstOrDefaultAsync(c => c.UserId == userId);
 
             if (cart == null)
             {
                 return NotFound("Cart not found.");
             }
 
-            return Ok(cart);
+            var cartDto = CartDTO.AutoMapper(cart);
+
+            return Ok(cartDto);
         }
 
         [HttpPost]
-        public IActionResult CreateCart()
+        public async Task<IActionResult> CreateItemInCart([FromBody] CartItemDTO cartItemDTO)
         {
-            if (User.Identity == null || !User.Identity.IsAuthenticated)
-            {
-                return Unauthorized("User is not authenticated.");
-            }
+
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
             if (string.IsNullOrEmpty(userId))
             {
-                return Forbid("User ID not found in claims.");
+                // TODO: Handle the case with SessionID
+                return Unauthorized("User ID not found in claims. Please log in.");
             }
-            var cart = new Models.Cart { UserId = userId };
-            _context.Carts.Add(cart);
-            _context.SaveChanges();
-            return CreatedAtAction(nameof(GetCart), new { id = cart.Id }, cart);
+
+            var cart = await _context.Carts
+                .Include(c => c.Items)
+                .FirstOrDefaultAsync(c => c.UserId == userId);
+
+            if (cart == null)
+            {
+                cart = new Cart { UserId = userId, Items = new List<CartItem>() };
+                await _context.Carts.AddAsync(cart);
+            }
+
+            var existingItem = cart.Items.FirstOrDefault(i => i.AnimalId == cartItemDTO.AnimalId);
+            if (existingItem != null)
+            {
+                existingItem.Quantity += cartItemDTO.Quantity;
+            } else
+            {
+                var newCartItem = new CartItem
+                {
+                    AnimalId = cartItemDTO.AnimalId,
+                    Quantity = cartItemDTO.Quantity,
+                    CartId = cart.CartId
+                };
+
+                cart.UpdatedAt = DateTime.UtcNow;
+
+                cart.Items.Add(newCartItem);
+            }
+
+            cart.UpdatedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+
+            var cartDto = CartDTO.AutoMapper(cart);
+
+            return Ok(cartDto);
         }
     }
 }
