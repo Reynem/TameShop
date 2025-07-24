@@ -139,6 +139,44 @@ namespace TameShop.Controllers
             return Ok(cartDto);
         }
 
+        [HttpDelete]
+        public async Task<IActionResult> DecreaseItemInCart([FromBody] CartItemUpdateDTO cartItemUpdateDTO)
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized("User ID not found in claims. Please log in.");
+            }
+
+            var cart = await _context.Carts
+                .Include(c => c.Items)
+                .FirstOrDefaultAsync(c => c.UserId == userId);
+
+            if (cart == null)
+            {
+                return NotFound("Cart not found.");
+            }
+
+            var itemToDecrease = cart.Items.FirstOrDefault(i => i.AnimalId == cartItemUpdateDTO.AnimalId);
+
+            if (itemToDecrease == null)
+            {
+                return NotFound("Item not found in cart.");
+            }
+
+            if (itemToDecrease.Quantity - cartItemUpdateDTO.Quantity >= 1)
+            {
+                itemToDecrease.Quantity -= cartItemUpdateDTO.Quantity;
+            } else
+            {
+                cart.Items.Remove(itemToDecrease);
+            }
+            cart.UpdatedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+            var cartDto = CartDTO.AutoMapper(cart);
+            return Ok(cartDto);
+        }
 
         [HttpDelete("{animalId}")]
         public async Task<IActionResult> RemoveItemFromCart(int animalId)

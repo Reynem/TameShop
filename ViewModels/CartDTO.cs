@@ -18,8 +18,8 @@ namespace TameShop.ViewModels
                 UserId = cart.UserId,
                 Items = cart.Items.Select(i => new CartItemDTO
                 {
-                    Quantity = i.Quantity,
-                    AnimalId = i.AnimalId
+                    AnimalId = i.AnimalId,
+                    Quantity = i.Quantity
                 }).ToList(),
                 CreatedAt = cart.CreatedAt,
                 UpdatedAt = cart.UpdatedAt
