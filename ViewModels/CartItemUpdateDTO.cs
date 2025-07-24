@@ -2,7 +2,7 @@
 
 namespace TameShop.ViewModels
 {
-    public class CartItemDTO
+    public class CartItemUpdateDTO
     {
         [Required]
         [Range(1, int.MaxValue, ErrorMessage = "Quantity must be at least 1.")]
@@ -10,6 +10,5 @@ namespace TameShop.ViewModels
 
         [Required]
         public int AnimalId { get; set; }
-        public DateTime DateCreated { get; set; } = DateTime.UtcNow;
     }
 }

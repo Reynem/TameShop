@@ -18,7 +18,6 @@ namespace TameShop.ViewModels
                 UserId = cart.UserId,
                 Items = cart.Items.Select(i => new CartItemDTO
                 {
-                    CartId = i.CartId,
                     Quantity = i.Quantity,
                     AnimalId = i.AnimalId
                 }).ToList(),

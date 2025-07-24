@@ -48,6 +48,16 @@ namespace TameShop.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateItemInCart([FromBody] CartItemDTO cartItemDTO)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var animalExists = await _context.Animals.AnyAsync(a => a.Id == cartItemDTO.AnimalId);
+            if (!animalExists)
+            {
+                return BadRequest("Invalid AnimalId. Animal not found.");
+            }
 
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
@@ -94,30 +104,38 @@ namespace TameShop.Controllers
             return Ok(cartDto);
         }
 
-        [HttpPut("{animalId}/{quantity}")]
-        public async Task<IActionResult> UpdateItemInCart(int animalId, int quantity)
+        [HttpPut]
+        public async Task<IActionResult> UpdateItemInCart([FromBody] CartItemUpdateDTO cartItemUpdateDTO)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
             if (string.IsNullOrEmpty(userId))
             {
                 return Unauthorized("User ID not found in claims. Please log in.");
             }
+
             var cart = await _context.Carts
                 .Include(c => c.Items)
                 .FirstOrDefaultAsync(c => c.UserId == userId);
+
             if (cart == null)
             {
                 return NotFound("Cart not found.");
             }
-            var itemToUpdate = cart.Items.FirstOrDefault(i => i.AnimalId == animalId);
+
+            var itemToUpdate = cart.Items.FirstOrDefault(i => i.AnimalId == cartItemUpdateDTO.AnimalId);
+
             if (itemToUpdate == null)
             {
                 return NotFound("Item not found in cart.");
             }
-            itemToUpdate.Quantity = quantity;
+
+            itemToUpdate.Quantity = cartItemUpdateDTO.Quantity;
             cart.UpdatedAt = DateTime.UtcNow;
+
             await _context.SaveChangesAsync();
             var cartDto = CartDTO.AutoMapper(cart);
+
             return Ok(cartDto);
         }
 
