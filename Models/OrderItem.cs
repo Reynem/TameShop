@@ -8,6 +8,8 @@
         public decimal Price { get; set; }
         public required string AnimalName { get; set; }
         public int Quantity { get; set; }
-        
+        public virtual Animal Animal { get; set; } = null!;
+        public virtual Order Order { get; set; } = null!;
+
     }
 }

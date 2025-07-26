@@ -14,6 +14,7 @@ namespace TameShop.Models
         public DateTime DateCreated { get; set; } = DateTime.UtcNow;
 
         public int AnimalId { get; set; }
+        public virtual Cart Cart { get; set; } = null!; 
         public virtual Animal Animal { get; set; } = null!;
     }
 }

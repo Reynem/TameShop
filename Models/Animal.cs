@@ -6,7 +6,7 @@ namespace TameShop.Models
     {
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
-        public double Price { get; set; } = 1.99;
+        public decimal Price { get; set; } = 1.99M;
         public string Description { get; set; } = string.Empty;
         public string ImageUrl { get; set; } = string.Empty;
         public string Category { get; set; } = string.Empty;

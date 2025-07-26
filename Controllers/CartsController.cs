@@ -199,10 +199,7 @@ namespace TameShop.Controllers
                 var cart = await _context.Carts
                     .Include(c => c.Items)
                     .FirstOrDefaultAsync(c => c.UserId == userId);
-                if (cart == null)
-                {
-                    throw new KeyNotFoundException("Cart not found for the user.");
-                }
+
                 return cart;
             }
             catch (UnauthorizedAccessException e)

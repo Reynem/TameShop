@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using TameShop.Data;
@@ -11,9 +12,11 @@ using TameShop.Data;
 namespace TameShop.Migrations
 {
     [DbContext(typeof(TameShopDbContext))]
-    partial class UserDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250726160101_InitiationOfOrdersAndModelsConnections")]
+    partial class InitiationOfOrdersAndModelsConnections
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -46,8 +49,8 @@ namespace TameShop.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<decimal>("Price")
-                        .HasColumnType("numeric");
+                    b.Property<double>("Price")
+                        .HasColumnType("double precision");
 
                     b.HasKey("Id");
 
@@ -127,9 +130,7 @@ namespace TameShop.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId");
-
-                    b.ToTable("Orders");
+                    b.ToTable("Order");
                 });
 
             modelBuilder.Entity("TameShop.Models.OrderItem", b =>
@@ -158,11 +159,9 @@ namespace TameShop.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AnimalId");
-
                     b.HasIndex("OrderId");
 
-                    b.ToTable("OrderItems");
+                    b.ToTable("OrderItem");
                 });
 
             modelBuilder.Entity("TameShop.Models.User", b =>
@@ -222,48 +221,25 @@ namespace TameShop.Migrations
                     b.HasOne("TameShop.Models.Animal", "Animal")
                         .WithMany()
                         .HasForeignKey("AnimalId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("TameShop.Models.Cart", "Cart")
+                    b.HasOne("TameShop.Models.Cart", null)
                         .WithMany("Items")
                         .HasForeignKey("CartId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Animal");
-
-                    b.Navigation("Cart");
-                });
-
-            modelBuilder.Entity("TameShop.Models.Order", b =>
-                {
-                    b.HasOne("TameShop.Models.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("TameShop.Models.OrderItem", b =>
                 {
-                    b.HasOne("TameShop.Models.Animal", "Animal")
-                        .WithMany()
-                        .HasForeignKey("AnimalId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("TameShop.Models.Order", "Order")
+                    b.HasOne("TameShop.Models.Order", null)
                         .WithMany("Items")
                         .HasForeignKey("OrderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Animal");
-
-                    b.Navigation("Order");
                 });
 
             modelBuilder.Entity("TameShop.Models.Cart", b =>

@@ -8,6 +8,7 @@
         public decimal TotalAmount { get; set; }
         public OrderStatus Status { get; set; }
         public DateTime CreatedAt { get; set; }
+        public virtual User User { get; set; } = null!;
     }
     public enum OrderStatus
     {
