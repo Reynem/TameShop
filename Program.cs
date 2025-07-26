@@ -66,6 +66,13 @@ builder.Services.AddRateLimiter(options =>
     };
 });
 
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30);
+    options.Cookie.HttpOnly = true; // Ensures the session cookie is accessible only by the server
+    options.Cookie.IsEssential = true;
+});
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -92,6 +99,8 @@ app.UseHttpsRedirection();
 app.UseRouting();
 
 app.UseCors();
+
+app.UseSession();
 
 app.UseRateLimiter();
 

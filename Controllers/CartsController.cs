@@ -11,10 +11,11 @@ namespace TameShop.Controllers
 
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize(AuthenticationSchemes = "Bearer")]
     public class CartsController : ControllerBase
     {
         private readonly TameShopDbContext _context;
+
+        private const string CartSessionKey = "CartId";
 
         public CartsController(TameShopDbContext context)
         {
@@ -173,12 +174,20 @@ namespace TameShop.Controllers
         { 
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-            if (string.IsNullOrEmpty(userId))
+            if (!string.IsNullOrEmpty(userId))
             {
-                throw new UnauthorizedAccessException("User ID not found in claims.");
+                return userId;
             }
 
-            return userId;
+            var sessionId = HttpContext.Session.GetString(CartSessionKey);
+
+            if (string.IsNullOrEmpty(sessionId))
+            {
+                sessionId = Guid.NewGuid().ToString();
+                HttpContext.Session.SetString(CartSessionKey, sessionId);
+            }
+            
+            return sessionId;
         }
 
         private async Task<Cart> GetCartByUserIdAsync()
