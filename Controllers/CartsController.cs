@@ -8,6 +8,7 @@ using TameShop.ViewModels;
 
 namespace TameShop.Controllers
 {
+
     [ApiController]
     [Route("api/[controller]")]
     [Authorize(AuthenticationSchemes = "Bearer")]
@@ -23,17 +24,7 @@ namespace TameShop.Controllers
         [HttpGet]
         public async Task<IActionResult> GetCart()
         {
-
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-            if (string.IsNullOrEmpty(userId))
-            {
-                return Forbid("User ID not found in claims.");
-            }
-
-            var cart = await _context.Carts
-                .Include(c => c.Items)
-                .FirstOrDefaultAsync(c => c.UserId == userId);
+            var cart = await GetCartByUserIdAsync();
 
             if (cart == null)
             {
@@ -59,17 +50,9 @@ namespace TameShop.Controllers
                 return BadRequest("Invalid AnimalId. Animal not found.");
             }
 
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var userId = GetValidUserAsync();
 
-            if (string.IsNullOrEmpty(userId))
-            {
-                // TODO: Handle the case with SessionID
-                return Unauthorized("User ID not found in claims. Please log in.");
-            }
-
-            var cart = await _context.Carts
-                .Include(c => c.Items)
-                .FirstOrDefaultAsync(c => c.UserId == userId);
+            var cart = await GetCartByUserIdAsync();
 
             if (cart == null)
             {
@@ -78,10 +61,13 @@ namespace TameShop.Controllers
             }
 
             var existingItem = cart.Items.FirstOrDefault(i => i.AnimalId == cartItemDTO.AnimalId);
+
             if (existingItem != null)
             {
                 existingItem.Quantity += cartItemDTO.Quantity;
-            } else
+            }
+
+            else
             {
                 var newCartItem = new CartItem
                 {
@@ -107,16 +93,7 @@ namespace TameShop.Controllers
         [HttpPut]
         public async Task<IActionResult> UpdateItemInCart([FromBody] CartItemUpdateDTO cartItemUpdateDTO)
         {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-            if (string.IsNullOrEmpty(userId))
-            {
-                return Unauthorized("User ID not found in claims. Please log in.");
-            }
-
-            var cart = await _context.Carts
-                .Include(c => c.Items)
-                .FirstOrDefaultAsync(c => c.UserId == userId);
+            var cart = await GetCartByUserIdAsync();
 
             if (cart == null)
             {
@@ -139,19 +116,10 @@ namespace TameShop.Controllers
             return Ok(cartDto);
         }
 
-        [HttpDelete]
+        [HttpDelete("decrease")]
         public async Task<IActionResult> DecreaseItemInCart([FromBody] CartItemUpdateDTO cartItemUpdateDTO)
         {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-            if (string.IsNullOrEmpty(userId))
-            {
-                return Unauthorized("User ID not found in claims. Please log in.");
-            }
-
-            var cart = await _context.Carts
-                .Include(c => c.Items)
-                .FirstOrDefaultAsync(c => c.UserId == userId);
+            var cart = await GetCartByUserIdAsync();
 
             if (cart == null)
             {
@@ -168,7 +136,8 @@ namespace TameShop.Controllers
             if (itemToDecrease.Quantity - cartItemUpdateDTO.Quantity >= 1)
             {
                 itemToDecrease.Quantity -= cartItemUpdateDTO.Quantity;
-            } else
+            }
+            else
             {
                 cart.Items.Remove(itemToDecrease);
             }
@@ -181,18 +150,13 @@ namespace TameShop.Controllers
         [HttpDelete("{animalId}")]
         public async Task<IActionResult> RemoveItemFromCart(int animalId)
         {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId))
-            {
-                return Unauthorized("User ID not found in claims. Please log in.");
-            }
-            var cart = await _context.Carts
-                .Include(c => c.Items)
-                .FirstOrDefaultAsync(c => c.UserId == userId);
+            var cart = await GetCartByUserIdAsync();
+
             if (cart == null)
             {
                 return NotFound("Cart not found.");
             }
+
             var itemToRemove = cart.Items.FirstOrDefault(i => i.AnimalId == animalId);
             if (itemToRemove == null)
             {
@@ -203,6 +167,39 @@ namespace TameShop.Controllers
             await _context.SaveChangesAsync();
             var cartDto = CartDTO.AutoMapper(cart);
             return Ok(cartDto);
+        }
+
+        private string GetValidUserAsync() 
+        { 
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(userId))
+            {
+                throw new UnauthorizedAccessException("User ID not found in claims.");
+            }
+
+            return userId;
+        }
+
+        private async Task<Cart> GetCartByUserIdAsync()
+        {
+            try
+            {
+                var userId = GetValidUserAsync();
+
+                var cart = await _context.Carts
+                    .Include(c => c.Items)
+                    .FirstOrDefaultAsync(c => c.UserId == userId);
+                if (cart == null)
+                {
+                    throw new KeyNotFoundException("Cart not found for the user.");
+                }
+                return cart;
+            }
+            catch (UnauthorizedAccessException e)
+            {
+                throw new UnauthorizedAccessException("An error occurred while retrieving the cart.", e);
+            }
         }
     }
 }
