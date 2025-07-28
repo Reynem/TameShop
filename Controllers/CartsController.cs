@@ -200,7 +200,9 @@ namespace TameShop.Controllers
                     .Include(c => c.Items)
                     .FirstOrDefaultAsync(c => c.UserId == userId);
 
+#pragma warning disable CS8603 // Возможно, возврат ссылки, допускающей значение NULL.
                 return cart;
+#pragma warning restore CS8603 // Возможно, возврат ссылки, допускающей значение NULL.
             }
             catch (UnauthorizedAccessException e)
             {
