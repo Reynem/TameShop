@@ -9,6 +9,7 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using TameShop.Data;
 using TameShop.Models;
+using TameShop.ViewModels;
 
 namespace TameShop.Controllers
 {
@@ -75,16 +76,62 @@ namespace TameShop.Controllers
         //    return NoContent();
         //}
 
-        // POST: api/Orders
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        //[HttpPost]
-        //public async Task<ActionResult<Order>> PostOrder(Order order)
-        //{
-        //    _context.Orders.Add(order);
-        //    await _context.SaveChangesAsync();
+        [HttpPost("{id}")]
+        public async Task<ActionResult<OrderDTO>> PostOrderItem(int id, [FromBody] OrderItemDTO orderItemDTO)
+        {
+            var userId = GetValidUserAsync();
 
-        //    return CreatedAtAction("GetOrder", new { id = order.Id }, order);
-        //}
+            // Creation of a new order will be handled in other methods, so I assume the order already exists
+            var order = await _context.Orders
+                .Include(o => o.Items)
+                .FirstOrDefaultAsync(o => o.Id == id && o.UserId == userId);
+
+            if (order == null)
+            {
+                return NotFound("Order not found.");
+            }
+
+            // Order status check
+            if (order.Status != OrderStatus.Pending)
+            {
+                return BadRequest("Cannot modify order after it's confirmed.");
+            }
+
+            // Get the animal name and price
+            var animal = await _context.Animals
+                .Where(a => a.Id == orderItemDTO.AnimalId)
+                .Select(a => new { a.Name, a.Price })
+                .FirstOrDefaultAsync();
+
+            if (animal == null)
+            {
+                return BadRequest("Invalid Animal ID.");
+            }
+
+            // Check if the order item already exists
+            var existingItem = order.Items.FirstOrDefault(i => i.AnimalId == orderItemDTO.AnimalId);
+            if (existingItem != null)
+            {
+                existingItem.Quantity += orderItemDTO.Quantity;
+            }
+            else
+            {
+                var orderItem = new OrderItem
+                {
+                    AnimalId = orderItemDTO.AnimalId,
+                    Price = animal.Price,
+                    AnimalName = animal.Name,
+                    Quantity = orderItemDTO.Quantity
+                };
+
+                order.Items.Add(orderItem);
+            }
+
+            await _context.SaveChangesAsync();
+
+            var orderDTO = OrderDTO.AutoMapper(order);
+            return Ok(orderDTO);
+        }
 
         // DELETE: api/Orders/5
         //[HttpDelete("{id}")]

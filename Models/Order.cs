@@ -7,7 +7,7 @@
         public required List<OrderItem> Items { get; set; }
         public decimal TotalAmount { get; set; }
         public OrderStatus Status { get; set; }
-        public DateTime CreatedAt { get; set; }
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public virtual User User { get; set; } = null!;
     }
     public enum OrderStatus
