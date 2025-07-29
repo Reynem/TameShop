@@ -133,6 +133,41 @@ namespace TameShop.Controllers
             return Ok(orderDTO);
         }
 
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteOrderItem(int id, [FromBody] OrderItemDTO orderItemDTO)
+        {
+            var userId = GetValidUserAsync();
+
+            // Find the order
+            var order = await _context.Orders
+                .Include(o => o.Items)
+                .FirstOrDefaultAsync(o => o.Id == id && o.UserId == userId);
+
+            if (order == null)
+            {
+                return NotFound("Order not found.");
+            }
+
+            // Order status check
+            if (order.Status != OrderStatus.Pending)
+            {
+                return BadRequest("Cannot modify order after it's confirmed.");
+            }
+
+            // Find the item to delete
+            var itemToDelete = order.Items.FirstOrDefault(i => i.AnimalId == orderItemDTO.AnimalId);
+            if (itemToDelete == null)
+            {
+                return NotFound("Order item not found.");
+            }
+
+            // Remove the item
+            order.Items.Remove(itemToDelete);
+            await _context.SaveChangesAsync();
+            var orderDTO = OrderDTO.AutoMapper(order);
+            return Ok(orderDTO);
+        }
+
         // DELETE: api/Orders/5
         //[HttpDelete("{id}")]
         //public async Task<IActionResult> DeleteOrder(int id)
