@@ -45,37 +45,6 @@ namespace TameShop.Controllers
             return orders;
         }
 
-        // PUT: api/Orders/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        //[HttpPut("{id}")]
-        //public async Task<IActionResult> PutOrder(int id, Order order)
-        //{
-        //    if (id != order.Id)
-        //    {
-        //        return BadRequest();
-        //    }
-
-        //    _context.Entry(order).State = EntityState.Modified;
-
-        //    try
-        //    {
-        //        await _context.SaveChangesAsync();
-        //    }
-        //    catch (DbUpdateConcurrencyException)
-        //    {
-        //        if (!OrderExists(id))
-        //        {
-        //            return NotFound();
-        //        }
-        //        else
-        //        {
-        //            throw;
-        //        }
-        //    }
-
-        //    return NoContent();
-        //}
-
         [HttpPost("{id}")]
         public async Task<ActionResult<OrderDTO>> PostOrderItem(int id, [FromBody] OrderItemDTO orderItemDTO)
         {
@@ -161,28 +130,77 @@ namespace TameShop.Controllers
                 return NotFound("Order item not found.");
             }
 
-            // Remove the item
-            order.Items.Remove(itemToDelete);
+            // Remove the item or reduce its quantity
+            if (itemToDelete.Quantity > orderItemDTO.Quantity)
+            {
+                itemToDelete.Quantity -= orderItemDTO.Quantity;
+            }
+            else
+            {
+                order.Items.Remove(itemToDelete);
+            }
+
             await _context.SaveChangesAsync();
             var orderDTO = OrderDTO.AutoMapper(order);
             return Ok(orderDTO);
         }
 
-        // DELETE: api/Orders/5
-        //[HttpDelete("{id}")]
-        //public async Task<IActionResult> DeleteOrder(int id)
-        //{
-        //    var order = await _context.Orders.FindAsync(id);
-        //    if (order == null)
-        //    {
-        //        return NotFound();
-        //    }
+        [HttpPut("{id}/confirm")]
+        public async Task<IActionResult> CompleteOrder(int id)
+        {
+            var userId = GetValidUserAsync();
 
-        //    _context.Orders.Remove(order);
-        //    await _context.SaveChangesAsync();
+            // Find the order
+            var order = await _context.Orders
+                .Include(o => o.Items)
+                .FirstOrDefaultAsync(o => o.Id == id && o.UserId == userId);
 
-        //    return NoContent();
-        //}
+            if (order == null)
+            {
+                return NotFound("Order not found.");
+            }
+
+            // Order status check
+            if (order.Status != OrderStatus.Pending)
+            {
+                return BadRequest("Cannot confirm order after it's already confirmed or completed.");
+            }
+
+            // Update the order status
+            order.Status = OrderStatus.Completed;
+            await _context.SaveChangesAsync();
+            var orderDTO = OrderDTO.AutoMapper(order);
+            return Ok(orderDTO);
+        }
+
+        [HttpPatch("{id}/cancel")]
+        public async Task<IActionResult> CancelOrder(int id)
+        {
+            var userId = GetValidUserAsync();
+
+            // Find the order
+            var order = await _context.Orders
+                .Include(o => o.Items)
+                .FirstOrDefaultAsync(o => o.Id == id && o.UserId == userId);
+
+            if (order == null)
+            {
+                return NotFound("Order not found.");
+            }
+
+            // Order status check
+            if (order.Status != OrderStatus.Pending)
+            {
+                return BadRequest("Cannot cancel order after it's confirmed or completed.");
+            }
+
+            // Update the order status to cancelled
+            order.Status = OrderStatus.Cancelled;
+            await _context.SaveChangesAsync();
+            var orderDTO = OrderDTO.AutoMapper(order);
+            return Ok(orderDTO);
+        }
+
 
         private bool OrderExists(int id)
         {
