@@ -1,6 +1,6 @@
 ﻿using TameShop.Models;
 
-namespace TameShop.Data.Repositories.Interfaces
+namespace TameShop.Repositories.Interfaces
 {
     public interface ICartRepository : IRepository<Cart>
     {
