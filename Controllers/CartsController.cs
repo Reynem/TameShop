@@ -1,31 +1,27 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
-using TameShop.Models;
-using TameShop.Data;
-using Microsoft.EntityFrameworkCore;
+using TameShop.Services.Interfaces;
 using TameShop.ViewModels;
 
 namespace TameShop.Controllers
 {
-
     [ApiController]
     [Route("api/[controller]")]
     public class CartsController : ControllerBase
     {
-        private readonly TameShopDbContext _context;
+        private readonly ICartsService _cartsService;
 
-        private const string CartSessionKey = "CartId";
-
-        public CartsController(TameShopDbContext context)
+        public CartsController(ICartsService cartsService)
         {
-            _context = context;
+            _cartsService = cartsService;
         }
 
         [HttpGet]
         public async Task<IActionResult> GetCart()
         {
-            var cart = await GetCartByUserIdAsync();
+            var userId = _cartsService.GetValidUserId(User, HttpContext);
+            var cart = await _cartsService.GetCartByUserIdAsync(userId);
 
             if (cart == null)
             {
@@ -33,7 +29,6 @@ namespace TameShop.Controllers
             }
 
             var cartDto = CartDTO.AutoMapper(cart);
-
             return Ok(cartDto);
         }
 
@@ -45,74 +40,39 @@ namespace TameShop.Controllers
                 return BadRequest(ModelState);
             }
 
-            var animalExists = await _context.Animals.AnyAsync(a => a.Id == cartItemDTO.AnimalId);
-            if (!animalExists)
+            try
             {
-                return BadRequest("Invalid AnimalId. Animal not found.");
-            }
+                var userId = _cartsService.GetValidUserId(User, HttpContext);
+                var cartDto = await _cartsService.CreateOrUpdateCartItemAsync(userId, cartItemDTO);
 
-            var userId = GetValidUserAsync();
-
-            var cart = await GetCartByUserIdAsync();
-
-            if (cart == null)
-            {
-                cart = new Cart { UserId = userId, Items = new List<CartItem>() };
-                await _context.Carts.AddAsync(cart);
-            }
-
-            var existingItem = cart.Items.FirstOrDefault(i => i.AnimalId == cartItemDTO.AnimalId);
-
-            if (existingItem != null)
-            {
-                existingItem.Quantity += cartItemDTO.Quantity;
-            }
-
-            else
-            {
-                var newCartItem = new CartItem
+                if (cartDto == null)
                 {
-                    AnimalId = cartItemDTO.AnimalId,
-                    Quantity = cartItemDTO.Quantity,
-                    CartId = cart.CartId
-                };
+                    return NotFound("Cart not found.");
+                }
 
-                cart.UpdatedAt = DateTime.UtcNow;
-
-                cart.Items.Add(newCartItem);
+                return Ok(cartDto);
             }
-
-            cart.UpdatedAt = DateTime.UtcNow;
-
-            await _context.SaveChangesAsync();
-
-            var cartDto = CartDTO.AutoMapper(cart);
-
-            return Ok(cartDto);
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         [HttpPut]
         public async Task<IActionResult> UpdateItemInCart([FromBody] CartItemUpdateDTO cartItemUpdateDTO)
         {
-            var cart = await GetCartByUserIdAsync();
-
-            if (cart == null)
+            if (!ModelState.IsValid)
             {
-                return NotFound("Cart not found.");
+                return BadRequest(ModelState);
             }
 
-            var itemToUpdate = cart.Items.FirstOrDefault(i => i.AnimalId == cartItemUpdateDTO.AnimalId);
+            var userId = _cartsService.GetValidUserId(User, HttpContext);
+            var cartDto = await _cartsService.UpdateCartItemQuantityAsync(userId, cartItemUpdateDTO);
 
-            if (itemToUpdate == null)
+            if (cartDto == null)
             {
-                return NotFound("Item not found in cart.");
+                return NotFound("Cart or item not found.");
             }
-
-            itemToUpdate.Quantity = cartItemUpdateDTO.Quantity;
-            cart.UpdatedAt = DateTime.UtcNow;
-
-            await _context.SaveChangesAsync();
-            var cartDto = CartDTO.AutoMapper(cart);
 
             return Ok(cartDto);
         }
@@ -120,94 +80,34 @@ namespace TameShop.Controllers
         [HttpDelete("decrease")]
         public async Task<IActionResult> DecreaseItemInCart([FromBody] CartItemUpdateDTO cartItemUpdateDTO)
         {
-            var cart = await GetCartByUserIdAsync();
-
-            if (cart == null)
+            if (!ModelState.IsValid)
             {
-                return NotFound("Cart not found.");
+                return BadRequest(ModelState);
             }
 
-            var itemToDecrease = cart.Items.FirstOrDefault(i => i.AnimalId == cartItemUpdateDTO.AnimalId);
+            var userId = _cartsService.GetValidUserId(User, HttpContext);
+            var cartDto = await _cartsService.DecreaseCartItemQuantityAsync(userId, cartItemUpdateDTO);
 
-            if (itemToDecrease == null)
+            if (cartDto == null)
             {
-                return NotFound("Item not found in cart.");
+                return NotFound("Cart or item not found.");
             }
 
-            if (itemToDecrease.Quantity - cartItemUpdateDTO.Quantity >= 1)
-            {
-                itemToDecrease.Quantity -= cartItemUpdateDTO.Quantity;
-            }
-            else
-            {
-                cart.Items.Remove(itemToDecrease);
-            }
-            cart.UpdatedAt = DateTime.UtcNow;
-            await _context.SaveChangesAsync();
-            var cartDto = CartDTO.AutoMapper(cart);
             return Ok(cartDto);
         }
 
         [HttpDelete("{animalId}")]
         public async Task<IActionResult> RemoveItemFromCart(int animalId)
         {
-            var cart = await GetCartByUserIdAsync();
+            var userId = _cartsService.GetValidUserId(User, HttpContext);
+            var cartDto = await _cartsService.RemoveCartItemAsync(userId, animalId);
 
-            if (cart == null)
+            if (cartDto == null)
             {
-                return NotFound("Cart not found.");
+                return NotFound("Cart or item not found.");
             }
 
-            var itemToRemove = cart.Items.FirstOrDefault(i => i.AnimalId == animalId);
-            if (itemToRemove == null)
-            {
-                return NotFound("Item not found in cart.");
-            }
-            cart.Items.Remove(itemToRemove);
-            cart.UpdatedAt = DateTime.UtcNow;
-            await _context.SaveChangesAsync();
-            var cartDto = CartDTO.AutoMapper(cart);
             return Ok(cartDto);
-        }
-
-        private string GetValidUserAsync() 
-        { 
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-            if (!string.IsNullOrEmpty(userId))
-            {
-                return userId;
-            }
-
-            var sessionId = HttpContext.Session.GetString(CartSessionKey);
-
-            if (string.IsNullOrEmpty(sessionId))
-            {
-                sessionId = Guid.NewGuid().ToString();
-                HttpContext.Session.SetString(CartSessionKey, sessionId);
-            }
-            
-            return sessionId;
-        }
-
-        private async Task<Cart> GetCartByUserIdAsync()
-        {
-            try
-            {
-                var userId = GetValidUserAsync();
-
-                var cart = await _context.Carts
-                    .Include(c => c.Items)
-                    .FirstOrDefaultAsync(c => c.UserId == userId);
-
-#pragma warning disable CS8603 // Возможно, возврат ссылки, допускающей значение NULL.
-                return cart;
-#pragma warning restore CS8603 // Возможно, возврат ссылки, допускающей значение NULL.
-            }
-            catch (UnauthorizedAccessException e)
-            {
-                throw new UnauthorizedAccessException("An error occurred while retrieving the cart.", e);
-            }
         }
     }
 }
