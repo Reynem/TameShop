@@ -7,11 +7,11 @@ namespace TameShop.Models
         [Key]
         public int Id { get; set; }
 
-        public required string CartId { get; set; }
+        public string CartId { get; set; } = null!;
 
         public int Quantity { get; set; }
 
-        public DateTime DateCreated { get; set; } = DateTime.UtcNow;
+        public DateTime DateCreated { get; set; }
 
         public int AnimalId { get; set; }
         public virtual Cart Cart { get; set; } = null!; 

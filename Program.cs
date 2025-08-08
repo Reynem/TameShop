@@ -7,6 +7,10 @@ using System.Threading.RateLimiting;
 using TameShop.Data;
 using TameShop.JWT;
 using TameShop.Models;
+using TameShop.Repositories.Implementations;
+using TameShop.Repositories.Interfaces;
+using TameShop.Services.Implementations;
+using TameShop.Services.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
@@ -82,6 +86,9 @@ builder.Services.AddIdentity<User, IdentityRole>()
 
 builder.Services.AddRazorPages();
 builder.Services.AddSingleton<TokenProvider>();
+
+builder.Services.AddScoped<ICartRepository, CartRepository>();
+builder.Services.AddScoped<ICartsService, CartsService>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddControllers();

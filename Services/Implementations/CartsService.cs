@@ -33,7 +33,7 @@ namespace TameShop.Services.Implementations
 
             if (cart == null)
             {
-                cart = new Cart { UserId = userId, Items = new List<CartItem>() };
+                cart = new Cart { UserId = userId };
                 await _cartRepository.AddAsync(cart);
             }
 
@@ -45,17 +45,14 @@ namespace TameShop.Services.Implementations
             }
             else
             {
-                var newCartItem = new CartItem
+                cart.Items.Add(new CartItem
                 {
                     AnimalId = cartItemDTO.AnimalId,
-                    Quantity = cartItemDTO.Quantity,
-                    CartId = cart.CartId
-                };
-                cart.Items.Add(newCartItem);
+                    Quantity = cartItemDTO.Quantity
+                });
             }
 
             cart.UpdatedAt = DateTime.UtcNow;
-            _cartRepository.Update(cart);
             await _cartRepository.SaveChangesAsync();
 
             return CartDTO.AutoMapper(cart);

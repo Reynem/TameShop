@@ -56,7 +56,20 @@ namespace TameShop.Data
                 .HasForeignKey(o => o.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            modelBuilder.Entity<Cart>()
+                .Property(c => c.CreatedAt)
+                .HasDefaultValueSql("NOW() AT TIME ZONE 'UTC'")
+                .ValueGeneratedOnAdd();
 
+            modelBuilder.Entity<CartItem>()
+                .Property(ci => ci.DateCreated)
+                .HasDefaultValueSql("NOW() AT TIME ZONE 'UTC'")
+                .ValueGeneratedOnAdd();
+
+            modelBuilder.Entity<Order>()
+                .Property(o => o.CreatedAt)
+                .HasDefaultValueSql("NOW() AT TIME ZONE 'UTC'")
+                .ValueGeneratedOnAdd();
         }
 
         //protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
