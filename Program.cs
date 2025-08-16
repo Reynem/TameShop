@@ -90,6 +90,9 @@ builder.Services.AddSingleton<TokenProvider>();
 builder.Services.AddScoped<ICartRepository, CartRepository>();
 builder.Services.AddScoped<ICartsService, CartsService>();
 
+builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+builder.Services.AddScoped<IOrderService, OrderService>();
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddControllers();
 
