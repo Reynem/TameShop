@@ -22,14 +22,6 @@ namespace TameShop.Repositories.Implementations
                 .FirstOrDefaultAsync(c => c.UserId == userId);
         }
 
-        public async Task<IEnumerable<Cart>> GetAllAsync()
-        {
-            return await _context.Carts
-                .Include(c => c.Items)
-                .ThenInclude(i => i.Animal)
-                .ToListAsync();
-        }
-
         public async Task AddAsync(Cart entity)
         {
             await _context.Carts.AddAsync(entity);
