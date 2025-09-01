@@ -168,5 +168,30 @@ namespace TameShop.Controllers
 
             return Ok(animals);
         }
+
+        [HttpGet("paged")]
+        public async Task<IActionResult> GetAnimalsPaged([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+        {
+            if (page <= 0 || pageSize <= 0)
+            {
+                return BadRequest("Page and pageSize must be greater than 0.");
+            }
+
+            var totalCount = await _context.Animals.CountAsync();
+            var animals = await _context.Animals
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            var result = new
+            {
+                TotalCount = totalCount,
+                Page = page,
+                PageSize = pageSize,
+                Data = animals
+            };
+
+            return Ok(result);
+        }
     }
 }
