@@ -105,5 +105,25 @@ namespace TameShop.Controllers
             }
             return Ok(animals);
         }
+
+        [HttpGet("search")]
+        public async Task<IActionResult> SearchAnimals([FromQuery] string name)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                return BadRequest("Name cannot be empty.");
+            }
+
+            var animals = await _context.Animals
+                .Where(a => a.Name.ToLower().Contains(name.ToLower()))
+                .ToListAsync();
+
+            if (!animals.Any())
+            {
+                return NotFound("No animals found with this name.");
+            }
+
+            return Ok(animals);
+        }
     }
 }
