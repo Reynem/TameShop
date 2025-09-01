@@ -125,5 +125,48 @@ namespace TameShop.Controllers
 
             return Ok(animals);
         }
+
+        [HttpGet("filter")]
+        public async Task<IActionResult> FilterByPrice(
+            [FromQuery] decimal? minPrice,
+            [FromQuery] decimal? maxPrice,
+            [FromQuery] string sortOrder = "asc",
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageSize = 10) // "asc" or "desc"
+        {
+            var query = _context.Animals.AsQueryable();
+
+            if (minPrice.HasValue && maxPrice.HasValue && minPrice > maxPrice)
+            {
+                return BadRequest("minPrice cannot be greater than maxPrice.");
+            }
+
+            if (minPrice.HasValue)
+            {
+                query = query.Where(a => a.Price >= minPrice.Value);
+            }
+            if (maxPrice.HasValue)
+            {
+                query = query.Where(a => a.Price <= maxPrice.Value);
+            }
+
+            query = sortOrder.ToLower() switch
+            {
+                "desc" => query.OrderByDescending(a => a.Price),
+                _ => query.OrderBy(a => a.Price)
+            };
+
+            var animals = await query
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            if (!animals.Any())
+            {
+                return NotFound("No animals found in this price range.");
+            }
+
+            return Ok(animals);
+        }
     }
 }
