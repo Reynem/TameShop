@@ -17,6 +17,7 @@ namespace TameShop.Controllers
         }
 
         [HttpGet]
+        [ResponseCache(Duration = 300)]
         public async Task<IActionResult> GetAnimals()
         {
             var animals = await _context.Animals.ToListAsync();
