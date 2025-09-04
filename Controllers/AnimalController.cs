@@ -184,7 +184,7 @@ namespace TameShop.Controllers
                 .Take(pageSize)
                 .ToListAsync();
 
-            var result = new
+            var result = new PagedResultDTO<Animal>
             {
                 TotalCount = totalCount,
                 Page = page,
